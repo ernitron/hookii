@@ -16,7 +16,7 @@ sys.path.append(libs)
 def datetimestr_to_timestamp(dtstr):
     dtstruct = None
     try:
-        dtstruct = time.strptime(dtstr)
+        dtstruct = time.strptime(dtstr, "%Y-%m-%d %H:%M:%S")
         return time.mktime(dtstruct)
     except Exception:
         return 0

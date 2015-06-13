@@ -22,6 +22,11 @@ class Utils(unittest.TestCase):
     def test_datetimestr_to_timestamp_invalid_arg(self):
         res = datetimestr_to_timestamp("bla")
         self.assertEqual(res, 0)
+        
+    def test_datetimestr_to_timestamp_ok(self):
+        res = datetimestr_to_timestamp("2015-06-12 23:08:00")
+        expected = 1434143280
+        self.assertEqual(res, expected)
 
 
 if __name__ == "__main__":
