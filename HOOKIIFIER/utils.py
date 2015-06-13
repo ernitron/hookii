@@ -20,3 +20,15 @@ def datetimestr_to_timestamp(dtstr):
         return time.mktime(dtstruct)
     except Exception:
         return 0
+    
+def normalized_nickname(nickname):
+    norm_nick = None
+    try:
+        norm_nick = nickname.replace(" ", "")
+        if len(norm_nick) > 19:
+            return norm_nick[:19] + "_"
+        if len(norm_nick) == 0:
+            return None
+    except Exception:
+        return norm_nick
+    return norm_nick + "_"

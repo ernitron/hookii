@@ -1,5 +1,5 @@
 #!/bin/env python
-
+# -*- coding: utf-8 -*-
 '''
    Created on Jun 12, 2015
    @author: s1m0n4
@@ -11,7 +11,7 @@ import os
 import sys
 libs = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../'))
 sys.path.append(libs)
-from utils import datetimestr_to_timestamp
+from utils import *
 
 class Utils(unittest.TestCase):
 
@@ -27,7 +27,20 @@ class Utils(unittest.TestCase):
         res = datetimestr_to_timestamp("2015-06-12 23:08:00")
         expected = 1434143280
         self.assertEqual(res, expected)
-
+    
+    def test_normalized_nickname_none(self):
+        res = normalized_nickname(None)
+        self.assertIsNone(res)
+    
+    def test_normalized_nickname_empty(self):
+        res = normalized_nickname("     ")
+        self.assertIsNone(res)
+    
+    def test_normalized_nickname_nonasciichars(self):
+        res = normalized_nickname("Erni ♖")
+        self.assertEqual(res, "Erni♖_")
+        #print "Erni ♖ normalized nickname is: %s" % res
+        
 
 if __name__ == "__main__":
 #     suite = unittest.TestLoader().loadTestsFromTestCase(Utils)

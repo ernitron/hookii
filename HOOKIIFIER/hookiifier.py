@@ -15,6 +15,9 @@ import os
 import time
 import re
 import codecs
+libs = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(libs)
+from utils import *
 
 # Globals
 debug = False
@@ -91,7 +94,7 @@ def getarticle() :
         # Print article
         farticle = createfile('%s.html' % pname)
         print_article(farticle, ptitle, pdate, pcontent, pcount, pname)
-        getcomments(farticle, pid, 0, 0)
+        getcomments(farticle, pid, 0, 0, pname)
         print_article_close(farticle)
 
     print_index_close(findex)
@@ -101,7 +104,7 @@ def getarticle() :
         renameindexfile("index.workinprogress.html", "index.html")
 
 
-def getcomments(f, post, cid, indent) :
+def getcomments(f, post, cid, indent, pname) :
     global db
 
     indent += 1
@@ -120,8 +123,8 @@ def getcomments(f, post, cid, indent) :
         return
 
     for (cid, cdate, cauthor, ccontent, cparent, cpauthor) in cur.fetchall() :
-        print_comment(f, indent, cid, cdate, cauthor, ccontent, cparent, cpauthor)
-        getcomments(f, post, cid, indent)
+        print_comment(f, indent, cid, cdate, cauthor, ccontent, cparent, cpauthor, pname)
+        getcomments(f, post, cid, indent, pname)
 
 
 def debug_query() :
@@ -272,13 +275,16 @@ def print_footer(f) :
     f.close()
 
 
-def print_comment(f, indent, cid, cdate, cauthor, ccontent, cparent, cpauthor) :
+def print_comment(f, indent, cid, cdate, cauthor, ccontent, cparent, cpauthor, pname) :
     w = indent * 20
     print >> f, '<div style="margin-left:%dpx; margin-right:-%dx; width:600px;">' % (w, w)
+    timestamp = datetimestr_to_timestamp(repr(cdate))
+    nickname = normalized_nickname(cauthor)
+    url_tag =  "<a href=\"http://www.hookii.it/%s#%s%d>" % (pname, "" if nickname is None else nickname, timestamp)
     if (cauthor == cpauthor) :
-            print >> f, "<h3>", cauthor, "- <font size='2'>", cdate, "</font></h3>"
+            print >> f, "<h3>", url_tag, cauthor, "- <font size='2'>", cdate, "</font></a></h3>"
     else :
-            print >> f, "<h3>", cauthor, "@ %s" % cpauthor, "- <font size='2'>", cdate, "</font></h3>"
+            print >> f, "<h3>", url_tag, cauthor, "@ %s" % cpauthor, "- <font size='2'>", cdate, "</font></a></h3>"
 
     #ccontent = embed_image(ccontent)
     ccontent = embed_all(ccontent)
