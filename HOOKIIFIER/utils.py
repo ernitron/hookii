@@ -32,3 +32,12 @@ def normalized_nickname(nickname):
     except Exception:
         return norm_nick
     return norm_nick + "_"
+
+def read_file(f):
+    result = None
+    if f is not None:
+        if os.path.exists(f):
+            if os.path.isfile(f):
+                with open(f, 'r+') as fo:
+                    result = fo.read()
+    return result

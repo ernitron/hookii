@@ -123,7 +123,7 @@ def getcomments(f, post, cid, indent, pname) :
         return
 
     for (cid, cdate, cauthor, ccontent, cparent, cpauthor) in cur.fetchall() :
-        print_comment(f, indent, cid, cdate, cauthor, ccontent, cparent, cpauthor, pname)
+        print_comment(f, indent, cdate, cauthor, ccontent, cpauthor, pname)
         getcomments(f, post, cid, indent, pname)
 
 
@@ -275,12 +275,12 @@ def print_footer(f) :
     f.close()
 
 
-def print_comment(f, indent, cid, cdate, cauthor, ccontent, cparent, cpauthor, pname) :
+def print_comment(f, indent, cdate, cauthor, ccontent, cpauthor, pname) :
     w = indent * 20
     print >> f, '<div style="margin-left:%dpx; margin-right:-%dx; width:600px;">' % (w, w)
     timestamp = datetimestr_to_timestamp(repr(cdate))
     nickname = normalized_nickname(cauthor)
-    url_tag =  "<a href=\"http://www.hookii.it/%s#%s%d>" % (pname, "" if nickname is None else nickname, timestamp)
+    url_tag =  "<a href=\"http://www.hookii.it/%s#%s%d\">" % (pname, "" if nickname is None else nickname, timestamp)
     if (cauthor == cpauthor) :
             print >> f, "<h3>", url_tag, cauthor, "- <font size='2'>", cdate, "</font></a></h3>"
     else :

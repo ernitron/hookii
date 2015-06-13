@@ -40,7 +40,17 @@ class Utils(unittest.TestCase):
         res = normalized_nickname("Erni ♖")
         self.assertEqual(res, "Erni♖_")
         #print "Erni ♖ normalized nickname is: %s" % res
+    
+    def test_read_file_none(self):
+        self.assertIsNone(read_file(None))
         
+    def test_read_non_existing_file(self):
+        self.assertIsNone(read_file("bla"))
+    
+    def test_read_file_ok(self):
+        expected = "Can you read it?"
+        fpath = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', "test.txt"))
+        self.assertEqual(read_file(fpath), expected)
 
 if __name__ == "__main__":
 #     suite = unittest.TestLoader().loadTestsFromTestCase(Utils)
