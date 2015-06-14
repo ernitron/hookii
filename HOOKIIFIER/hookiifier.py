@@ -114,16 +114,16 @@ def getcomments(f, post, cid, indent, pname) :
     cur = db.cursor()
     try:
         if (cid == 0) :
-            sql = "select comment_id, comment_date, comment_author, comment_content, comment_parent, comment_author from avwp_comments where comment_post_ID=%d and comment_parent=%d order by comment_date desc" % (post, cid)
+            sql = "select comment_id, comment_date, comment_author, comment_content, comment_parent, comment_author, comment_agent from avwp_comments where comment_post_ID=%d and comment_parent=%d order by comment_date desc" % (post, cid)
         else :
-            sql = "select a.comment_id, a.comment_date, a.comment_author, a.comment_content, a.comment_parent, b.comment_author from avwp_comments a, avwp_comments b where a.comment_post_id=%d and a.comment_parent=%d and b.comment_id=%d order by comment_date desc" % (post, cid, cid)
+            sql = "select a.comment_id, a.comment_date, a.comment_author, a.comment_content, a.comment_parent, b.comment_author, a.comment_agent from avwp_comments a, avwp_comments b where a.comment_post_id=%d and a.comment_parent=%d and b.comment_id=%d order by comment_date desc" % (post, cid, cid)
         cur.execute(sql)
     except:
         print "Error ", sql
         return
 
-    for (cid, cdate, cauthor, ccontent, cparent, cpauthor) in cur.fetchall() :
-        print_comment(f, indent, cdate, cauthor, ccontent, cpauthor, pname)
+    for (cid, cdate, cauthor, ccontent, cparent, cpauthor, cagent) in cur.fetchall() :
+        print_comment(f, indent, cdate, cauthor, ccontent, cpauthor, cagent, pname )
         getcomments(f, post, cid, indent, pname)
 
 
@@ -132,13 +132,13 @@ def debug_query() :
 
     cur = db.cursor()
     try:
-        sql = "select comment_id, comment_date, comment_author, comment_content, comment_parent, comment_author from avwp_comments where comment_author like 'Erni%'"
+        sql = "select comment_id, comment_date, comment_author, comment_content, comment_parent, comment_author, comment_agent from avwp_comments where comment_author like 'Erni%'"
         cur.execute(sql)
     except:
         print "Error ", sql
         return
 
-    for (cid, cdate, cauthor, ccontent, cparent, cpauthor) in cur.fetchall() :
+    for (cid, cdate, cauthor, ccontent, cparent, cpauthor, cagent) in cur.fetchall() :
         print cauthor.encode('utf-8')
         break ;
 
@@ -275,16 +275,23 @@ def print_footer(f) :
     f.close()
 
 
-def print_comment(f, indent, cdate, cauthor, ccontent, cpauthor, pname) :
+def print_comment(f, indent, cdate, cauthor, ccontent, cpauthor, cagent, pname) :
+
+    try: 
+       disqus,disqid = cagent.split(':')
+    except:
+       disqid = '0'
+ 
     w = indent * 20
     print >> f, '<div style="margin-left:%dpx; margin-right:-%dx; width:600px;">' % (w, w)
-    timestamp = datetimestr_to_timestamp(repr(cdate))
-    nickname = normalized_nickname(cauthor)
-    url_tag =  "<a href=\"http://www.hookii.it/%s#%s%d\">" % (pname, "" if nickname is None else nickname, timestamp)
+    #timestamp = datetimestr_to_timestamp(repr(cdate))
+    #nickname = normalized_nickname(cauthor)
+    #url_tag =  "<a href='http://www.hookii.it/%s#%s%d'>" % (pname, "" if nickname is None else nickname, timestamp)
+    url_tag =  "<a href='http://www.hookii.it/%s/#comment-%s'>" % (pname, disqid)
     if (cauthor == cpauthor) :
-            print >> f, "<h3>", url_tag, cauthor, "- <font size='2'>", cdate, "</font></a></h3>"
+       print >> f, "<h3>", url_tag, cauthor, "- <font size='2'>", cdate, "</font></a></h3>"
     else :
-            print >> f, "<h3>", url_tag, cauthor, "@ %s" % cpauthor, "- <font size='2'>", cdate, "</font></a></h3>"
+       print >> f, "<h3>", url_tag, cauthor, "@ %s" % cpauthor, "- <font size='2'>", cdate, "</font></a></h3>"
 
     #ccontent = embed_image(ccontent)
     ccontent = embed_all(ccontent)
