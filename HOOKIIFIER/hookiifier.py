@@ -52,7 +52,6 @@ def getarticle() :
 
     if today :
         #datetoday = time.strftime('%Y-%m-%d')
-
         #from datetime import datetime
         #datetoday = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         #datetoday = datetime.strptime(str(datetoday), '%Y-%m-%d %H:%M:%S')
@@ -108,15 +107,13 @@ def getcomments(f, post, cid, indent, pname) :
     global db
 
     indent += 1
-    post = int(post)
-    cid = int(cid)
 
     cur = db.cursor()
     try:
         if (cid == 0) :
-            sql = "select comment_id, comment_date, comment_author, comment_content, comment_parent, comment_author, comment_agent from avwp_comments where comment_post_ID=%d and comment_parent=%d order by comment_date desc" % (post, cid)
+            sql = "select comment_id, comment_date, comment_author, comment_content, comment_parent, comment_author, comment_agent from avwp_comments where comment_post_ID=%s and comment_parent=%s order by comment_date desc" % (post, cid)
         else :
-            sql = "select a.comment_id, a.comment_date, a.comment_author, a.comment_content, a.comment_parent, b.comment_author, a.comment_agent from avwp_comments a, avwp_comments b where a.comment_post_id=%d and a.comment_parent=%d and b.comment_id=%d order by comment_date desc" % (post, cid, cid)
+            sql = "select a.comment_id, a.comment_date, a.comment_author, a.comment_content, a.comment_parent, b.comment_author, a.comment_agent from avwp_comments a, avwp_comments b where a.comment_post_id=%s and a.comment_parent=%s and b.comment_id=%s order by comment_date desc" % (post, cid, cid)
         cur.execute(sql)
     except:
         print "Error ", sql
@@ -210,11 +207,9 @@ def print_article(f, ptitle, pdate, pcontent, pcount, pname):
         print >> f, "<p style='margin-top:0.1em; font-size:80%%'>Comparso il " , pdate
         print >> f, "su <a href='http://www.hookii.it/'>hookii</a>. " 
         print >> f, "Vai all'articolo <a href='http://www.hookii.it/%s'>" % pname, pname , "</a> per commentare</p>"
-        #pcontent = embed_image(pcontent)
         pcontent = embed_youtube(pcontent)
-        #pcontent = embed_all(pcontent)
-        pcontent = "<p>".join(pcontent.split("\n"))
-        print >> f, pcontent, "</p>"
+        pcontent = "<br />".join(pcontent.split("\n"))
+        print >> f, "<p>", pcontent, "</p>"
         print >> f, '</div>'
         print >> f, '<hr>'
         #--------------------------------------
@@ -222,6 +217,7 @@ def print_article(f, ptitle, pdate, pcontent, pcount, pname):
         elif pcount == 1 : com = "commento"
         else : com = "No comments"
         print >> f, "<h3>" , pcount , com , "</h3>"
+        print >> f, "<hr>"
         print >> f, "<div class='hookii-comment'>" 
 
 def print_index_head(f) :
@@ -262,7 +258,7 @@ def print_footer(f) :
 
     print >> f, '</div>'
     print >> f, '<footer class="w3-container w3-theme-hookii">'
-    print >> f, "<a href='http://www.hookii.it/' style='color: white; font-size:80%%'>Hookii</a>"
+    print >> f, "<a href='http://www.hookii.it/' style='color: white;'>Hookii</a>"
     print >> f, 'Dookii productions &copy; 2014 - Generated on ' + time.strftime("%c")
     print >> f, '</footer>'
     print >> f, '</body></html>'
@@ -298,24 +294,20 @@ def print_comment(f, indent, cdate, cauthor, ccontent, cpauthor, cagent, pname) 
 pattern_url = ""
 pattern_youtube = ""
 pattern_image = ""
-pattern_article_image = ""
 
 def embed_init() :
     global pattern_url
     global pattern_youtube
     global pattern_image
-    global pattern_article_image
 
-    pattern = r"""(?i)\b((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>\[\]]+|\(([^\s()<>\[\]]+|(\([^\s()<>\[\]]+\)))*\))+(?:\(([^\s()<>\[\]]+|(\([^\s()<>\[\]]+\)))*\)|[^\s`!(){};:'".,<>?\[\]]))"""
+    #pattern = r"""(?i)\b((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>\[\]]+|\(([^\s()<>\[\]]+|(\([^\s()<>\[\]]+\)))*\))+(?:\(([^\s()<>\[\]]+|(\([^\s()<>\[\]]+\)))*\)|[^\s`!(){};:'".,<>?\[\]]))"""
+    pattern = '''((https?:\/\/)([\da-z\.-]+)\.([a-z\.]{2,6})([\/\?=#&%;\w \.-]*)*\/?)'''
     pattern_url = re.compile(pattern, re.MULTILINE)
 
-    pattern = '(https?:\/\/.*\.(?:png|jpg|gif|jpeg))'
+    pattern = '(https?:\/\/.*\.(?:png|jpg|gif|jpeg|JPG|JPEG|GIF|PNG))'
     pattern_image = re.compile(pattern, re.MULTILINE)
 
-    pattern = '(https?:\/\/.*\.(?:png|jpg|gif|jpeg))'
-    pattern_article_image = re.compile(pattern, re.MULTILINE)
-
-    pattern = '(http.{0,1}://www.youtube.com/)watch\?.*v=(...........)'
+    pattern = '(https?://www.youtube.com/)watch\?.*v=(...........)'
     pattern_youtube = re.compile(pattern, re.MULTILINE)
 
 
@@ -331,12 +323,6 @@ def embed_image(originalstring) :
 
     return string
 
-def embed_article_image(originalstring) :
-    replacement_string='"\\1"></a> <img src="\\1" class="w3-image">'
-    string = pattern_article_image.sub(replacement_string, originalstring)
-
-    return string
-
 def embed_youtube(originalstring) :
     replacement_string='<embed width="420" height="315px" src="\\1v/\\2">'
     string = pattern_youtube.sub(replacement_string, originalstring)
@@ -348,9 +334,9 @@ def embed_all(originalstring) :
     if string == originalstring :
         replacement_string='<img src="\\1" width="420px">'
         string = pattern_image.sub(replacement_string, originalstring)
-        #if string == originalstring :
-        #    replacement_string='<a href="\\1">\\1</a>'
-        #    string = pattern_url.sub(replacement_string, originalstring)
+        if string == originalstring :
+            replacement_string='<a href="\\1" target="_blank">\\1</a>'
+            string = pattern_url.sub(replacement_string, originalstring)
 
     return string
 
