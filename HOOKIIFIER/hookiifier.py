@@ -378,6 +378,12 @@ if __name__ == '__main__':
     today = options.today
     directory = options.directory
 
+    cssfile = os.path.join(directory, 'html5.css')
+    if os.path.isfile(cssfile) == False:
+       print "Stylesheet file not found ", cssfile, " Please install"
+       sys.exit()
+        
+
     # Start patterns for substitutions
     embed_init()
 
