@@ -304,7 +304,7 @@ def embed_init() :
     pattern = '''((https?:\/\/)([\da-z\.-]+)\.([a-z\.]{2,6})([\/\?=#&%;\w \.-]*)*\/?)'''
     pattern_url = re.compile(pattern, re.MULTILINE)
 
-    pattern = '(https?:\/\/.*\.(?:png|jpg|gif|jpeg|JPG|JPEG|GIF|PNG))'
+    pattern = '(https?:\/\/.*\.(?:png|jpg|gif|jpeg|JPG|JPEG|GIF|PNG)(?:\?\S+)?)'
     pattern_image = re.compile(pattern, re.MULTILINE)
 
     pattern = '(https?://www.youtube.com/)watch\?.*v=(...........)'
