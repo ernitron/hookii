@@ -10,6 +10,7 @@ setup(
     },
     install_requires = [
         'mysql',
+        'mako'
     ],
     entry_points = {
         'console_scripts': [

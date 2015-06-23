@@ -15,9 +15,14 @@ import os
 import time
 import re
 import codecs
-libs = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(libs)
-from utils import *
+import optparse
+import pkg_resources
+from mako.template import Template
+from mako.lookup import TemplateLookup
+from mako.runtime import Context
+#libs = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__))))
+#sys.path.append(libs)
+#from utils import *
 
 # Globals
 debug = False
@@ -25,6 +30,7 @@ force = False
 today = False
 db = None
 directory = "/tmp/originals"
+templatelookup = TemplateLookup(directories=[pkg_resources.resource_filename(__name__, "templates")])
 
 #------------------------------------------------------------
 # Database primitives
@@ -73,37 +79,48 @@ def getarticle() :
         print >> sys.stderr, "Error query: ", sql
         return
 
-    if today :
-        findex = createfile("today.workinprogress.html")
-    else:
-        findex = createfile("index.workinprogress.html")
-
-    print_index_head(findex)
-
     # print all the articles
+    articles = []
     for (pid, pdate, pauthor, ptitle, pcontent, pcount, pname, pstatus) in cur.fetchall() :
         if pcount == 0 :
             continue
-        print_article_into_index(findex, ptitle, pdate, pcount, pname)
+        articles.append({
+            "pname": pname,
+            "ptitle": ptitle,
+            "pdate": pdate,
+            "pcount": pcount
+        })
         if "closed" in pstatus :
             print >> sys.stderr, "comments for %s are closed... skipping" % ptitle
             if force != True :
                 continue
 
         # Print article
-        farticle = createfile('%s.html' % pname)
-        print_article(farticle, ptitle, pdate, pcontent, pcount, pname)
-        getcomments(farticle, pid, 0, 0, pname)
-        print_article_close(farticle)
+        comments = []
+        getcomments(comments, pid, 0, 0, pname)
+        ctx_article = {
+            "title": ptitle,
+            "gentime": time.strftime("%c"),
+            "pname": pname,
+            "ptitle": ptitle,
+            "pdate": pdate,
+            "pcontent": pcontent.split("\n"),
+            "pcount": pcount,
+            "comments": comments
+        }
+        render_template("archivearticle.mako", ctx_article, "%s.html" % pname)
 
-    print_index_close(findex)
-    if today :
-        renameindexfile("today.workinprogress.html", "today.html")
-    else :
-        renameindexfile("index.workinprogress.html", "index.html")
+    ctx_index = {
+        "title": "Index Archive",
+        "gentime": time.strftime("%c"),
+        "total_articles": len(articles),
+        "articles": articles
+    }
+    
+    render_template("archiveindex.mako", ctx_index, "today.html" if today else "index.html")
 
 
-def getcomments(f, post, cid, indent, pname) :
+def getcomments(comments, post, cid, indent, pname) :
     global db
 
     indent += 1
@@ -120,8 +137,15 @@ def getcomments(f, post, cid, indent, pname) :
         return
 
     for (cid, cdate, cauthor, ccontent, cparent, cpauthor, cagent) in cur.fetchall() :
-        print_comment(f, indent, cdate, cauthor, ccontent, cpauthor, cagent, pname )
-        getcomments(f, post, cid, indent, pname)
+        comments.append({
+            "margin": 20 * indent,
+            "cpauthor": cpauthor,
+            "cauthor": cauthor,
+            "disqid": cagent,
+            "cdate": cdate,
+            "ccontent": embed_all(ccontent)
+        })
+        getcomments(comments, post, cid, indent, pname)
 
 
 def debug_query() :
@@ -169,127 +193,13 @@ def renameindexfile(oldname, newname):
     except:
         print >> sys.stderr, "Cannot rename"
 
+def render_template(template, context, outfile):
+    with createfile(outfile) as f:
+        ctx = Context(f, **context)
+        t = templatelookup.get_template(template)
+        t.render_context(ctx)
+        f.close()
 
-def print_head(f, title) :
-    print >> f, u'''<html>
-<head>
-<title>%s</title>
- <meta name="generator" content="hookiifier">
- <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
- <meta name="robots" content="index, follow">
- <meta name="keywords" content="commenti, liberi, lettori, commenti giornali online, community, hookii">
- <meta name="description" content="%s">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="html5.css">
-<!-- All in one Favicon 4.3 -->
-<link rel="shortcut icon" href="http://www.hookii.it/wp-content/uploads/2014/12/favicon14.ico" />
-<link rel="icon" href="http://www.hookii.it/wp-content/uploads/2014/12/favicon14.ico" type="image/gif"/>
-<link rel="apple-touch-icon" href="http://www.hookii.it/wp-content/uploads/2014/12/muccaipod.png" />
-<style>
- .col1 { width: 50%%; display: inline-block; color:#444; }
- .col2 { width: 20%%; display: inline-block; color:#444; }
- .col3 { width: 5%%; text-align: right; display: inline-block; color:#444; }
-</style>
-
-</head>
-<body>
-<header class="w3-container w3-theme-hookii">
-<h1><a href='http://www.hookii.it/' style='text-decoration: none; color: white;'>Hookii</a>
-<a href='http://www.hookii.it/archived' style='text-decoration: none; color: white;'> Archive </a>
-<font size='4' style='color: white'><i>Yes, we post!</font></i></a></h1>
-</header>
-''' % (title, title)
-
-def print_article(f, ptitle, pdate, pcontent, pcount, pname):
-        print_head(f, ptitle)
-        print >> f, "<div class='hookii-article'>"
-        print >> f, "<h2 style='margin-bottom:0.1em;'><a href='http://www.hookii.it/%s'>" % pname, ptitle , "</a></h2>"
-        print >> f, "<p style='margin-top:0.1em; font-size:80%%'>Comparso il " , pdate
-        print >> f, "su <a href='http://www.hookii.it/'>hookii</a>. " 
-        print >> f, "Vai all'articolo <a href='http://www.hookii.it/%s'>" % pname, pname , "</a> per commentare</p>"
-        pcontent = embed_youtube(pcontent)
-        pcontent = "<br />".join(pcontent.split("\n"))
-        print >> f, "<p>", pcontent, "</p>"
-        print >> f, '</div>'
-        print >> f, '<hr>'
-        #--------------------------------------
-        if pcount > 1 : com = "commenti"
-        elif pcount == 1 : com = "commento"
-        else : com = "No comments"
-        print >> f, "<h3>" , pcount , com , "</h3>"
-        print >> f, "<hr>"
-        print >> f, "<div class='hookii-comment'>" 
-
-def print_index_head(f) :
-    print_head(f, "Index Archive")
-    print >> f, "<span class='col1'>Articolo</span>"
-    print >> f, "<span class='col2'>Pubblicato il</span>"
-    print >> f, "<span class='col3'>Commenti</span>"
-    print >> f, "<hr />"
-
-print_article_into_index_counter = 0
-def print_article_into_index(f, ptitle, pdate, pcount, pname):
-    global print_article_into_index_counter
-
-    print_article_into_index_counter += 1
-
-    article = "<a href='"+ pname + ".html'>" + ptitle + "</a>"
-    print >> f, "<span class='col1'>%s</span>" % article
-    print >> f, "<span class='col2'>%s</span>" % pdate
-    print >> f, "<span class='col3'><b>%s</b></span>" % pcount
-    print >> f, "<hr />"
-
-
-def print_index_close(f) :
-    global print_article_into_index_counter
-
-    print >> f, "<span class='col1'><b>%d Total articles archived </b></span>" % print_article_into_index_counter
-    print >> f, "<span class='col2'></span>"
-    print >> f, "<span class='col3'></span>"
-    print >> f, "<hr />"
-    print_footer(f)
-
-def print_article_close(f) :
-    print_footer(f)
-
-def print_footer(f) :
-    now = time.strftime("%c")
-    ## date and time representation
-
-    print >> f, '</div>'
-    print >> f, '<footer class="w3-container w3-theme-hookii">'
-    print >> f, "<a href='http://www.hookii.it/' style='color: white;'>Hookii</a>"
-    print >> f, 'Dookii productions &copy; 2014 - Generated on ' + time.strftime("%c")
-    print >> f, '</footer>'
-    print >> f, '</body></html>'
-    f.close()
-
-
-def print_comment(f, indent, cdate, cauthor, ccontent, cpauthor, cagent, pname) :
-
-    try: 
-       disqus,disqid = cagent.split(':')
-    except:
-       disqid = '0'
- 
-    w = indent * 20
-    print >> f, '<div style="margin-left:%dpx; margin-right:-%dx; width:80%%;">' % (w, w)
-    #timestamp = datetimestr_to_timestamp(repr(cdate))
-    #nickname = normalized_nickname(cauthor)
-    #url_tag =  "<a href='http://www.hookii.it/%s#%s%d'>" % (pname, "" if nickname is None else nickname, timestamp)
-    url_tag =  "<a href='http://www.hookii.it/%s/#comment-%s'>" % (pname, disqid)
-    if (cauthor == cpauthor) :
-       print >> f, "<h4 style='margin-bottom:0.1em;'>", url_tag, cauthor, "</a></h4>"
-       print >> f, "<p style='margin-top:0.1em; font-size:80%%'>", cdate, "</p>"
-    else :
-       print >> f, "<h4 style='margin-bottom:0.1em;'> &#8627;", url_tag, cauthor, "&#8614; %s" % cpauthor, "</a></h4>"
-       print >> f, "<p style='margin-top:0.1em; font-size:80%%'>", cdate, "</p>"
-
-    ccontent = embed_all(ccontent)
-    ccontent = "<br />".join(ccontent.split("\n"))
-    print >> f, "<p>", ccontent, "</p> "
-    print >> f, "<hr>"
-    print >> f, "</div>"
 
 pattern_url = ""
 pattern_youtube = ""
@@ -349,7 +259,6 @@ def main():
     global today
     global directory
 
-    import optparse
     Version = 0.9
 
     parser = optparse.OptionParser()
