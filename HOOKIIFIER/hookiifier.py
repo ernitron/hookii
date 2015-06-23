@@ -343,7 +343,11 @@ def embed_all(originalstring) :
 
 #------------------------------------------------------------
 # Main finally
-if __name__ == '__main__':
+def main():
+    global debug
+    global force
+    global today
+    global directory
 
     import optparse
     Version = 0.9
@@ -384,3 +388,5 @@ if __name__ == '__main__':
     # Process articles and from them comments
     getarticle()
 
+if __name__ == '__main__':
+    main()
