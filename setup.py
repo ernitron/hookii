@@ -5,6 +5,9 @@ setup(
     version = '0.9',
     license = 'GPLv2',
     packages = find_packages(),
+    package_data= {
+        'HOOKIIFIER': ['templates/*.mako']
+    },
     install_requires = [
         'mysql',
     ],
