@@ -226,45 +226,45 @@ def embed_init() :
     global pattern_youtube
     global pattern_image
 
-    #pattern = r"""(?i)\b((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>\[\]]+|\(([^\s()<>\[\]]+|(\([^\s()<>\[\]]+\)))*\))+(?:\(([^\s()<>\[\]]+|(\([^\s()<>\[\]]+\)))*\)|[^\s`!(){};:'".,<>?\[\]]))"""
-    pattern = '''((https?:\/\/)([\da-z\.-]+)\.([a-z\.]{2,6})([\/\?=#&%;\w \.-]*)*\/?)'''
+    pattern = "https?:\/\/\S+"
     pattern_url = re.compile(pattern, re.MULTILINE)
 
-    pattern = '(https?:\/\/.*\.(?:png|jpg|gif|jpeg|JPG|JPEG|GIF|PNG)(?:\?\S+)?)'
+    pattern = '(https?:\/\/.*?\.(?:png|jpg|gif|jpeg|JPG|JPEG|GIF|PNG)(?:\?\S+)?)'
     pattern_image = re.compile(pattern, re.MULTILINE)
 
-    pattern = '(https?://www.youtube.com/)watch\?.*v=(...........)'
+    pattern = '(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|(?:embed|v)\/))([^\?&"\'>\s]+)'
     pattern_youtube = re.compile(pattern, re.MULTILINE)
 
 
-def embed_url(originalstring) :
-    replacement_string='<a href="\\1">\\1</a>'
-    string = pattern_url.sub(replacement_string, originalstring)
+def embed_url(url):
+    string = "<a href='%s' target='_blank'>%s</a>" % (url,url)
+    return string, True
 
-    return string
+def embed_image(url):
+    replacement_string='<img src="\\1" width="420px" />'
+    string, n = pattern_image.subn(replacement_string, url)
+    return string, n > 0
 
-def embed_image(originalstring) :
-    replacement_string='<img src="\\1" class="w3-image">'
-    string = pattern_image.sub(replacement_string, originalstring)
+def embed_youtube(url):
+    replacement_string='<iframe width="560" height="315" src="https://www.youtube.com/embed/\\1" frameborder="0" allowfullscreen></iframe>'
+    string, n = pattern_youtube.subn(replacement_string, url)
+    return string, n > 0
 
-    return string
+def urlrepl(matchobj):
+    url = matchobj.group(0)
+    funcs = [
+        embed_youtube,
+        embed_image,
+        embed_url
+    ]
+    for f in funcs:
+        embed, matched = f(url)
+        if matched:
+            return embed
+    return url
 
-def embed_youtube(originalstring) :
-    replacement_string='<embed width="420" height="315px" src="\\1v/\\2">'
-    string = pattern_youtube.sub(replacement_string, originalstring)
-    return string
-
-def embed_all(originalstring) :
-    replacement_string='<embed width="420" height="315px" src="\\1v/\\2">'
-    string = pattern_youtube.sub(replacement_string, originalstring)
-    if string == originalstring :
-        replacement_string='<img src="\\1" width="420px">'
-        string = pattern_image.sub(replacement_string, originalstring)
-        if string == originalstring :
-            replacement_string='<a href="\\1" target="_blank">\\1</a>'
-            string = pattern_url.sub(replacement_string, originalstring)
-
-    return string
+def embed_all(originalstring):
+    return pattern_url.sub(urlrepl, originalstring)
 
 
 #------------------------------------------------------------
