@@ -12,6 +12,8 @@
 import MySQLdb as mysql
 import sys
 import os
+import shutil
+import glob
 import time
 import re
 import codecs
@@ -193,6 +195,20 @@ def renameindexfile(oldname, newname):
     except:
         print >> sys.stderr, "Cannot rename"
 
+def copystaticfiles():
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    
+    source_dir = pkg_resources.resource_filename(__name__, 'static')
+    for filename in glob.iglob(os.path.join(source_dir, '*')):
+        try:
+            shutil.copy(filename, directory)
+        except shutil.Error as e:
+            print('Error copying static file: %s' % e)
+        except IOError as e:
+            print('Error copying static file: %s' % e.strerror)
+
+
 def render_template(template, context, outfile):
     with createfile(outfile) as f:
         ctx = Context(f, **context)
@@ -277,11 +293,9 @@ def main():
     today = options.today
     directory = options.directory
 
-    cssfile = os.path.join(directory, 'html5.css')
-    if os.path.isfile(cssfile) == False:
-       print "Stylesheet file not found ", cssfile, " Please install"
-       sys.exit()
-        
+    
+    copystaticfiles()
+    
 
     # Start patterns for substitutions
     embed_init()

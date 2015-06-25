@@ -6,7 +6,7 @@ setup(
     license = 'GPLv2',
     packages = find_packages(),
     package_data= {
-        'HOOKIIFIER': ['templates/*.mako']
+        'HOOKIIFIER': ['templates/*.mako', 'static/*']
     },
     install_requires = [
         'mysql',
