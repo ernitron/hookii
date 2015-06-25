@@ -219,11 +219,13 @@ def render_template(template, context, outfile):
 
 pattern_url = ""
 pattern_youtube = ""
+pattern_vimeo = ""
 pattern_image = ""
 
 def embed_init() :
     global pattern_url
     global pattern_youtube
+    global pattern_vimeo
     global pattern_image
 
     pattern = "https?:\/\/\S+"
@@ -234,6 +236,9 @@ def embed_init() :
 
     pattern = '(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|(?:embed|v)\/))([^\?&"\'>\s]+)'
     pattern_youtube = re.compile(pattern, re.MULTILINE)
+    
+    pattern = '(?:https?:\/\/(?:[\w]+\.)*vimeo\.com(?:[\/\w:]*)?\/([0-9]+)[\S]*)'
+    pattern_vimeo = re.compile(pattern, re.MULTILINE)
 
 
 def embed_url(url):
@@ -250,10 +255,16 @@ def embed_youtube(url):
     string, n = pattern_youtube.subn(replacement_string, url)
     return string, n > 0
 
+def embed_vimeo(url):
+    replacement_string='<iframe src="https://player.vimeo.com/video/\\1" width="500" height="281" frameborder="0" allowfullscreen></iframe>'
+    string, n = pattern_vimeo.subn(replacement_string, url)
+    return string, n > 0
+
 def urlrepl(matchobj):
     url = matchobj.group(0)
     funcs = [
         embed_youtube,
+        embed_vimeo,
         embed_image,
         embed_url
     ]
