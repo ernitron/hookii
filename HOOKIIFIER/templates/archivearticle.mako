@@ -10,9 +10,7 @@
     </p>
 
     <p>
-    % for line in pcontent:
-        <br>${line}</br>
-    % endfor
+        ${pcontent}
     <p>
 </div>
 

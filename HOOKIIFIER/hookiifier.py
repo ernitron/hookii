@@ -106,7 +106,7 @@ def getarticle() :
             "pname": pname,
             "ptitle": ptitle,
             "pdate": pdate,
-            "pcontent": pcontent.split("\n"),
+            "pcontent": pcontent,
             "pcount": pcount,
             "comments": comments
         }
