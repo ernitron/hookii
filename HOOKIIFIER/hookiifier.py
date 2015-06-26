@@ -231,13 +231,13 @@ def embed_init() :
     pattern = "https?:\/\/\S+"
     pattern_url = re.compile(pattern, re.MULTILINE)
 
-    pattern = '(https?:\/\/.*?\.(?:png|jpg|gif|jpeg|JPG|JPEG|GIF|PNG)(?:\?\S+)?)'
+    pattern = '(https?:\/\/\S+\.(?:png|jpg|gif|jpeg|JPG|JPEG|GIF|PNG)(?:\?\S+)?)'
     pattern_image = re.compile(pattern, re.MULTILINE)
 
-    pattern = '(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|(?:embed|v)\/))([^\?&"\'>\s]+)'
+    pattern = 'https?:\/\/(?:www\.)?(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|(?:embed|v)\/))([^\?&"\'>\s]+)'
     pattern_youtube = re.compile(pattern, re.MULTILINE)
     
-    pattern = '(?:https?:\/\/(?:[\w]+\.)*vimeo\.com(?:[\/\w:]*)?\/([0-9]+)[\S]*)'
+    pattern = 'https?:\/\/(?:[\w]+\.)*vimeo\.com(?:[\/\w:]*)?\/([0-9]+)[\S]*'
     pattern_vimeo = re.compile(pattern, re.MULTILINE)
 
 
