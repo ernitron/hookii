@@ -14,7 +14,7 @@ setup(
     ],
     entry_points = {
         'console_scripts': [
-            'hookii-archive = HOOKIIFIER.hookiifier:main'
+            'hookiifier = HOOKIIFIER.hookiifier:main'
         ]
     }
 )
