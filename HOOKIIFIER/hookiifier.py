@@ -139,11 +139,16 @@ def getcomments(comments, post, cid, indent, pname) :
         return
 
     for (cid, cdate, cauthor, ccontent, cparent, cpauthor, cagent) in cur.fetchall() :
+        try:
+            _, disqid = cagent.split(":")
+        except ValueError:
+            disqid = "0"
+            
         comments.append({
             "margin": 20 * indent,
             "cpauthor": cpauthor,
             "cauthor": cauthor,
-            "disqid": cagent,
+            "disqid": disqid,
             "cdate": cdate,
             "ccontent": embed_all(ccontent)
         })
