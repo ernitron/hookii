@@ -150,7 +150,7 @@ def getcomments(comments, post, cid, indent, pname) :
             "cauthor": cauthor,
             "disqid": disqid,
             "cdate": cdate,
-            "ccontent": embed_all(ccontent)
+            "ccontent": ccontent
         })
         getcomments(comments, post, cid, indent, pname)
 
@@ -222,66 +222,6 @@ def render_template(template, context, outfile):
         f.close()
 
 
-pattern_url = ""
-pattern_youtube = ""
-pattern_vimeo = ""
-pattern_image = ""
-
-def embed_init() :
-    global pattern_url
-    global pattern_youtube
-    global pattern_vimeo
-    global pattern_image
-
-    pattern = "https?:\/\/\S+"
-    pattern_url = re.compile(pattern, re.MULTILINE)
-
-    pattern = '(https?:\/\/\S+\.(?:png|jpg|gif|jpeg|JPG|JPEG|GIF|PNG)(?:\?\S+)?)'
-    pattern_image = re.compile(pattern, re.MULTILINE)
-
-    pattern = 'https?:\/\/(?:www\.)?(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|(?:embed|v)\/))([^\?&"\'>\s]+)'
-    pattern_youtube = re.compile(pattern, re.MULTILINE)
-    
-    pattern = 'https?:\/\/(?:[\w]+\.)*vimeo\.com(?:[\/\w:]*)?\/([0-9]+)[\S]*'
-    pattern_vimeo = re.compile(pattern, re.MULTILINE)
-
-
-def embed_url(url):
-    string = "<a href='%s' target='_blank'>%s</a>" % (url,url)
-    return string, True
-
-def embed_image(url):
-    replacement_string='<img src="\\1" width="420px" />'
-    string, n = pattern_image.subn(replacement_string, url)
-    return string, n > 0
-
-def embed_youtube(url):
-    replacement_string='<iframe width="560" height="315" src="https://www.youtube.com/embed/\\1" frameborder="0" allowfullscreen></iframe>'
-    string, n = pattern_youtube.subn(replacement_string, url)
-    return string, n > 0
-
-def embed_vimeo(url):
-    replacement_string='<iframe src="https://player.vimeo.com/video/\\1" width="500" height="281" frameborder="0" allowfullscreen></iframe>'
-    string, n = pattern_vimeo.subn(replacement_string, url)
-    return string, n > 0
-
-def urlrepl(matchobj):
-    url = matchobj.group(0)
-    funcs = [
-        embed_youtube,
-        embed_vimeo,
-        embed_image,
-        embed_url
-    ]
-    for f in funcs:
-        embed, matched = f(url)
-        if matched:
-            return embed
-    return url
-
-def embed_all(originalstring):
-    return pattern_url.sub(urlrepl, originalstring)
-
 
 #------------------------------------------------------------
 # Main finally
@@ -309,12 +249,8 @@ def main():
     today = options.today
     directory = options.directory
 
-    
-    copystaticfiles()
-    
 
-    # Start patterns for substitutions
-    embed_init()
+    copystaticfiles()
 
     # Connection
     dbconnect(options.database, options.user, options.password)

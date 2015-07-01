@@ -1,5 +1,9 @@
 <%inherit file="base.mako"/>
 
+<%
+    import HOOKIIFIER.filters as filters
+%>
+
 <div class='hookii-article'>
     <h2 style='margin-bottom:0.1em;'>
         <a href='http://www.hookii.it/${pname}'>${ptitle}</a>
@@ -33,7 +37,7 @@
                 </a>
                 <p style='margin-top:0.1em; font-size:80%%'>${com["cdate"]}</p>
             </h4>
-            <p>${com["ccontent"]}</p> 
+            <p>${com["ccontent"] | filters.url, filters.disqus_user, filters.email_antispam }</p> 
             <hr>
         </div>
     % endfor
