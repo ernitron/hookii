@@ -26,6 +26,8 @@ from mako.runtime import Context
 #sys.path.append(libs)
 #from utils import *
 
+import hookiidb
+
 # Globals
 debug = False
 force = False
@@ -33,6 +35,90 @@ today = False
 db = None
 directory = "/tmp/originals"
 templatelookup = TemplateLookup(directories=[pkg_resources.resource_filename(__name__, "templates")])
+
+class HookiiTree:
+    def __init__(self, content=None):
+        self.content = content
+        self.children = []
+
+    def __iter__(self):
+        yield self.content
+        for child in self.children:
+            for child_content in child:
+                yield child_content
+
+def build_tree(postlist, commentlist):
+    posts = {}
+    comments = {}
+    tree = HookiiTree()
+    
+    for p in postlist:
+        if p["comment_count"] == 0:
+            continue
+        if p["comment_status"] == "closed":
+            continue
+        
+        p["level"] = 0
+        p["title"] = p["post_title"]
+        node = HookiiTree(p)
+        
+        tree.children.append(node)
+        posts[p["id"]] = node
+        
+    for c in commentlist:
+        try:
+            _, c["comment_disqusid"] = c["comment_agent"].split(":")
+        except ValueError:
+            c["comment_disqusid"] = "0"
+        node = HookiiTree(c)
+
+        post = posts.get(c["comment_post_ID"])
+        
+        if post is None:
+            print "No post (%d) for comment (%d)" % (c["comment_post_ID"], c["comment_id"])
+            continue
+        
+        if c["comment_parent"] == 0:
+            parent = post
+        else:
+            parent = comments.get(c["comment_parent"])
+            if parent is None:
+                print "No parent comment (%d) for comment (%d) in post (%d)" % (c["comment_parent"], c["comment_id"], c["comment_post_ID"])
+                continue
+            node.content["parent_author"] = parent.content["comment_author"]
+        
+        node.content["level"] = parent.content["level"] + 1
+        
+        node.content["parent_author"] = parent.content.get("comment_author", None)
+        node.content["level"] = parent.content.get("level", 0) + 1
+        
+        parent.children.append(node)
+        comments[c["comment_id"]] = node
+    
+    return tree
+
+def render_articles(tree):
+    for post in tree.children:
+        iterator = iter(post)
+        article = next(iterator)
+        article["comments"] = iterator
+        render_template("archivearticle.mako", article, "%s.html" % post.content["post_name"])
+        
+def render_index(tree):
+    ctx_index = {
+        "title": "Index Archive",
+        "total_articles": len(tree.children),
+        "articles": (node.content for node in reversed(tree.children))
+    }
+    render_template("archiveindex.mako", ctx_index, "today.html" if today else "index.html")
+
+def hookiifier(user, passw, database):
+    db = hookiidb.HookiiDB(user, passw, database)
+    posts = db.get_posts()
+    comments = db.get_comments()
+    tree = build_tree(posts, comments)
+    render_articles(tree)
+    render_index(tree)
 
 #------------------------------------------------------------
 # Database primitives
@@ -252,16 +338,18 @@ def main():
 
     copystaticfiles()
 
-    # Connection
-    dbconnect(options.database, options.user, options.password)
+    ## Connection
+    #dbconnect(options.database, options.user, options.password)
 
-    if debug :
-        print Version
-        #debug_query()
-        #sys.exit()
+    #if debug :
+        #print Version
+        ##debug_query()
+        ##sys.exit()
 
-    # Process articles and from them comments
-    getarticle()
+    ## Process articles and from them comments
+    #getarticle()
+    
+    hookiifier(options.user, options.password, options.database)
 
 if __name__ == '__main__':
     main()

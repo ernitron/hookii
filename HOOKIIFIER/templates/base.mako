@@ -1,3 +1,6 @@
+<%!
+    import time
+%>
 <html>
 <head>
     <title>${title}</title>
@@ -35,7 +38,7 @@
     <footer class="w3-container w3-theme-hookii">
     <%block name="footer">
         <a href='http://www.hookii.it/' style='color: white; font-size:80%%'>Hookii</a>
-        Dookii productions &copy; 2014 - Generated on ${gentime}
+        Dookii productions &copy; 2014 - Generated on ${time.strftime("%c")}
     </%block>
     </footer>
 </body>
