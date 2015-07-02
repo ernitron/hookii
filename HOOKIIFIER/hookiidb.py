@@ -104,3 +104,15 @@ class HookiiDB:
         }
         
         return self._executeQuery(query % clause, args)
+
+    def exist_older_posts(self, date):
+        query = """
+            SELECT EXISTS (
+                SELECT 1
+                FROM avwp_comments
+                WHERE comment_date <= %s
+            ) AS older_posts;
+        """
+        r = self._executeQuery(query, (date,))
+        for re in r:
+            return re.get("older_posts", 0)

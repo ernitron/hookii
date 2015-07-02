@@ -116,14 +116,29 @@ def render_index(tree):
 def hookiifier(user, passw, database, today):
     db = hookiidb.HookiiDB(user, passw, database)
 
-    yesterday = datetime.now() - timedelta(days=1)
-    datetoday = yesterday.strftime("%Y-%m-%d") if today else None
-    posts = db.get_posts(datetoday)
-    comments = db.get_comments(datetoday)
-    
-    tree = build_tree(posts, comments)
-    render_articles(tree)
-    render_index(tree)
+    if today:
+        yesterday = datetime.now() - timedelta(days=1)
+        datetoday = yesterday.strftime("%Y-%m-%d")
+        posts = db.get_posts(datetoday)
+        comments = db.get_comments(datetoday)
+        
+        tree = build_tree(posts, comments)
+        render_articles(tree)
+        render_index(tree)
+    else:
+        datemax = datetime.now()
+        delta = timedelta(days=30)
+        datemin = datemax - delta
+        posttree = HookiiTree()
+        while db.exist_older_posts(datemax):
+            print datemax
+            posts = db.get_posts(datemin, datemax)
+            comments = db.get_comments(datemin, datemax)
+            tree = build_tree(posts, comments)
+            render_articles(tree)
+            posttree.children += tree.children
+            datemin, datemax = (datemax - delta * 2, datemin)
+        render_index(posttree)
 
 #------------------------------------------------------------
 # Database primitives
