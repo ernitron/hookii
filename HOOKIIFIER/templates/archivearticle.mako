@@ -14,7 +14,7 @@
     </p>
 
     <p>
-        ${pcontent}
+        ${pcontent | filters.newline}
     <p>
 </div>
 
@@ -37,7 +37,7 @@
                 </a>
                 <p style='margin-top:0.1em; font-size:80%%'>${com["cdate"]}</p>
             </h4>
-            <p>${com["ccontent"] | filters.url, filters.disqus_user, filters.email_antispam }</p> 
+            <p>${com["ccontent"] | filters.url, filters.disqus_user, filters.email_antispam, filters.newline }</p> 
             <hr>
         </div>
     % endfor

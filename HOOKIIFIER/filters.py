@@ -63,3 +63,6 @@ def disqus_user(string):
 
 def email_antispam(string):
     return pattern_email.sub("\\1 (at) \\2", string)
+
+def newline(string):
+    return string.replace("\n", "<br />")
