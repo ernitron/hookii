@@ -39,7 +39,7 @@ class HookiiDB:
             finally:
                 cur.close()
 
-    def get_posts(self):
+    def get_posts(self, post_date_min=None, post_date_max=None):
         query = """
             SELECT id,
                    post_author,
@@ -50,11 +50,28 @@ class HookiiDB:
                    comment_count,
                    comment_status
             FROM avwp_posts
+            %s
             ORDER BY post_date ASC;
         """
-        return self._executeQuery(query)
+        
+        filters = []
+            
+        if post_date_min is not None:
+            filters.append("post_date > %(post_date_min)s")
 
-    def get_comments(self):
+        if post_date_max is not None:
+            filters.append("post_date <= %(post_date_max)s")
+
+        clause = "WHERE " + " AND ".join(filters) if len(filters) > 0 else ""
+
+        args = {
+            "post_date_min": post_date_min,
+            "post_date_max": post_date_max,
+        }
+        
+        return self._executeQuery(query % clause, args)
+
+    def get_comments(self, post_date_min=None, post_date_max=None):
         query = """
             SELECT comment_id,
                    comment_date,
@@ -64,6 +81,26 @@ class HookiiDB:
                    comment_agent,
                    comment_post_ID
             FROM avwp_comments
+            %s
             ORDER BY comment_date ASC
         """
-        return self._executeQuery(query)
+        
+        filters = []
+            
+        if post_date_min is not None:
+            filters.append("post_date > %(post_date_min)s")
+
+        if post_date_max is not None:
+            filters.append("post_date <= %(post_date_max)s")
+
+        clause = """
+            INNER JOIN avwp_posts AS p
+            ON p.ID = comment_post_ID
+            WHERE """ + " AND ".join(filters) if len(filters) > 0 else ""
+
+        args = {
+            "post_date_min": post_date_min,
+            "post_date_max": post_date_max,
+        }
+        
+        return self._executeQuery(query % clause, args)

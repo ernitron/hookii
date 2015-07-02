@@ -19,6 +19,7 @@ import re
 import codecs
 import optparse
 import pkg_resources
+from datetime import datetime, timedelta
 from mako.template import Template
 from mako.lookup import TemplateLookup
 from mako.runtime import Context
@@ -112,10 +113,14 @@ def render_index(tree):
     }
     render_template("archiveindex.mako", ctx_index, "today.html" if today else "index.html")
 
-def hookiifier(user, passw, database):
+def hookiifier(user, passw, database, today):
     db = hookiidb.HookiiDB(user, passw, database)
-    posts = db.get_posts()
-    comments = db.get_comments()
+
+    yesterday = datetime.now() - timedelta(days=1)
+    datetoday = yesterday.strftime("%Y-%m-%d") if today else None
+    posts = db.get_posts(datetoday)
+    comments = db.get_comments(datetoday)
+    
     tree = build_tree(posts, comments)
     render_articles(tree)
     render_index(tree)
@@ -349,7 +354,7 @@ def main():
     ## Process articles and from them comments
     #getarticle()
     
-    hookiifier(options.user, options.password, options.database)
+    hookiifier(options.user, options.password, options.database, today)
 
 if __name__ == '__main__':
     main()
