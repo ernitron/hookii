@@ -82,11 +82,7 @@ def build_tree(postlist, commentlist):
                 print "No parent comment (%d) for comment (%d) in post (%d)" % (c["comment_parent"], c["comment_id"], c["comment_post_ID"])
                 continue
             node.content["parent_author"] = parent.content["comment_author"]
-        
         node.content["level"] = parent.content["level"] + 1
-        
-        node.content["parent_author"] = parent.content.get("comment_author", None)
-        node.content["level"] = parent.content.get("level", 0) + 1
 
         parent.children.append(node)
         comments[c["comment_id"]] = node
