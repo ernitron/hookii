@@ -90,21 +90,21 @@ def build_tree(postlist, commentlist):
     return tree
 
 
-def render_articles(tree):
-    for post in tree.children:
-        iterator = iter(post)
-        article = next(iterator)
-        article["comments"] = iterator
-        render_template("archivearticle.mako", article, "%s.html" % post.content["post_name"])
+def render_posts(tree):
+    for node_post in tree.children:
+        iterator = iter(node_post)
+        ctx_post = next(iterator)
+        ctx_post["comments"] = iterator
+        render_template("post.mako", ctx_post, "%s.html" % node_post.content["post_name"])
 
 
 def render_index(tree):
     ctx_index = {
         "title": "Index Archive",
-        "total_articles": len(tree.children),
-        "articles": (node.content for node in reversed(tree.children))
+        "total_posts": len(tree.children),
+        "posts": (node.content for node in reversed(tree.children))
     }
-    render_template("archiveindex.mako", ctx_index, "today.html" if today else "index.html")
+    render_template("index.mako", ctx_index, "today.html" if today else "index.html")
 
 
 def hookiifier(user, passw, database, today):
@@ -117,7 +117,7 @@ def hookiifier(user, passw, database, today):
         comments = db.get_comments(datetoday)
 
         tree = build_tree(posts, comments)
-        render_articles(tree)
+        render_posts(tree)
         render_index(tree)
     else:
         datemax = datetime.now()
@@ -128,7 +128,7 @@ def hookiifier(user, passw, database, today):
             posts = db.get_posts(datemin, datemax)
             comments = db.get_comments(datemin, datemax)
             tree = build_tree(posts, comments)
-            render_articles(tree)
+            render_posts(tree)
             posttree.children += tree.children
             datemin, datemax = (datemax - delta * 2, datemin)
         render_index(posttree)
