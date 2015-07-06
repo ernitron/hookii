@@ -4,7 +4,7 @@ import re
 
 
 pattern_url = re.compile("(?<![\'\"])https?:\/\/\S+")
-pattern_youtube = re.compile("https?:\/\/(?:www\.)?(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|(?:embed|v)\/))([^\?&\"\'>\s]+)")
+pattern_youtube = re.compile("https?:\/\/(?:www\.|m\.)?(?:youtu\.be\/|youtube\.com\/(?:watch\?\S*v=|(?:embed|v)\/))([^\?&\"\'>\s]+)")
 pattern_vimeo = re.compile("https?:\/\/(?:[\w]+\.)*vimeo\.com(?:[\/\w:]*)?\/([0-9]+)[\S]*")
 pattern_image = re.compile("(https?:\/\/\S+\.(?:png|jpg|gif|jpeg|JPG|JPEG|GIF|PNG)(?:\?\S+)?)")
 pattern_disqus = re.compile("@(\w+):disqus")
