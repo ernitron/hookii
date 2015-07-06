@@ -8,13 +8,13 @@
     <h2 style='margin-bottom:0.1em;'>
         <a href='http://www.hookii.it/${post_name}'>${post_title}</a>
     </h2>
-    <p style='margin-top:0.1em;'>
-        <font size='2'>Comparso il ${post_date} su <a href='http://www.hookii.it/'>hookii.</a></font>
+    <p style='margin-top:0.1em; font-size:80%%'>
+        Comparso il ${post_date} su <a href='http://www.hookii.it/'>hookii.</a>
         Vai all'articolo <a href='http://www.hookii.it/${post_name}'>${post_name}</a> per commentare.
     </p>
 
     <p>
-        ${post_content | filters.newline}
+        ${post_content | filters.url, filters.disqus_user, filters.email_antispam, filters.newline}
     <p>
 </div>
 
@@ -23,6 +23,8 @@
 <h3>
     ${comment_count} ${"commenti" if comment_count != 1 else "commento"}
 </h3>
+
+<hr>
 
 <div class='hookii-comment'>
     % for com in comments:
@@ -35,8 +37,8 @@
                     ${"&#8627; %s &#8614; %s " % (com["comment_author"], com["parent_author"])}
                 % endif
                 </a>
-                <p style='margin-top:0.1em; font-size:80%%'>${com["comment_date"]}</p>
             </h4>
+            <p style='margin-top:0.1em; font-size:80%%'>${com["comment_date"]}</p>
             <p>${com["comment_content"] | filters.url, filters.disqus_user, filters.email_antispam, filters.newline }</p> 
             <hr>
         </div>
