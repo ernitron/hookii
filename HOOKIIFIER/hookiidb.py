@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from __future__ import print_function
 import sys
 
 import MySQLdb as mysql
@@ -20,8 +21,8 @@ class HookiiDB:
                 use_unicode=True,
                 cursorclass=MySQLdb.cursors.DictCursor
             )
-        except mysql.Error, e:
-            print >> sys.stderr, "Error opening db", e
+        except mysql.Error as e:
+            print("Error opening db", e, file=sys.stderr)
             sys.exit()
 
     def __del__(self):
@@ -32,9 +33,9 @@ class HookiiDB:
             try:
                 cur.execute(query, args)
                 return cur.fetchall()
-            except mysql.DatabaseError, e:
-                print >> sys.stderr, "Error: ", e
-                print >> sys.stderr, "\tquery: ", query
+            except mysql.DatabaseError as e:
+                print("Error:", e, file=sys.stderr)
+                print("\tquery", query, file=sys.stderr)
                 return
             finally:
                 cur.close()

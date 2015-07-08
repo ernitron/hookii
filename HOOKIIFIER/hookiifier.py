@@ -9,6 +9,7 @@
 # Hookii Dookii productions 2014
 # DATE: Mon Nov 24 15:48:21 CET 2014
 
+from __future__ import print_function
 import os
 import shutil
 import glob
@@ -20,8 +21,8 @@ from datetime import datetime, timedelta
 from mako.lookup import TemplateLookup
 from mako.runtime import Context
 
+from . import hookiidb
 
-import hookiidb
 
 __version__ = pkg_resources.get_distribution("HOOKIIFIER").version
 
