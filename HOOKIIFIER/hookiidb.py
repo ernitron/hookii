@@ -39,7 +39,12 @@ class HookiiDB:
             finally:
                 cur.close()
 
-    def get_posts(self, post_date_min=None, post_date_max=None, only_published=False, only_with_comments=False):
+    def get_posts(self,
+                  post_date_min=None,
+                  post_date_max=None,
+                  only_published=False,
+                  only_with_comments=False,
+                  only_open=False):
         query = """
             SELECT id,
                    post_author,
@@ -67,6 +72,9 @@ class HookiiDB:
 
         if only_with_comments:
             filters.append("comment_count > 0")
+
+        if only_open:
+            filters.append("comment_status = 'open'")
 
         clause = "WHERE " + " AND ".join(filters) if len(filters) > 0 else ""
 

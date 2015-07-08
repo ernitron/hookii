@@ -49,10 +49,6 @@ def build_tree(postlist, commentlist):
     tree = HookiiTree()
 
     for p in postlist:
-        if not force and p["comment_status"] == "closed":
-            print "Skipping closed post (%d)" % (p["id"])
-            continue
-
         p["level"] = 0
         node = HookiiTree(p)
 
@@ -115,7 +111,10 @@ def hookiifier(user, passw, database, today):
     if today:
         yesterday = datetime.now() - timedelta(days=1)
         yesterday = yesterday.replace(hour=0, minute=0, second=0)
-        posts = db.get_posts(yesterday, only_published=True, only_with_comments=True)
+        posts = db.get_posts(yesterday,
+                             only_published=True,
+                             only_with_comments=True,
+                             only_open=True)
         comments = db.get_comments(yesterday)
         tree = build_tree(posts, comments)
         render_posts(tree)
@@ -127,7 +126,10 @@ def hookiifier(user, passw, database, today):
         posttree = HookiiTree()
         min_post_date = db.min_post_date(only_published=True, only_with_comments=True)
         while datemax >= min_post_date:
-            posts = db.get_posts(datemin, datemax, only_published=True, only_with_comments=True)
+            posts = db.get_posts(datemin, datemax,
+                                 only_published=True,
+                                 only_with_comments=True,
+                                 only_open=True)
             comments = db.get_comments(datemin, datemax)
             tree = build_tree(posts, comments)
             render_posts(tree)
