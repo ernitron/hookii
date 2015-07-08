@@ -129,7 +129,7 @@ def hookiifier(user, passw, database, today):
             comments = db.get_comments(datemin, datemax)
             tree = build_tree(posts, comments)
             render_posts(tree)
-            posttree.children += tree.children
+            posttree.children += [HookiiTree(postnode.content) for postnode in tree.children]
             datemin, datemax = (datemax - delta * 2, datemin)
         render_index(posttree)
 
