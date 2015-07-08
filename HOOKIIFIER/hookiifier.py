@@ -49,13 +49,11 @@ def build_tree(postlist, commentlist):
     tree = HookiiTree()
 
     for p in postlist:
-        if p["comment_count"] == 0:
-            continue
-        if p["comment_status"] == "closed":
+        if not force and p["comment_status"] == "closed":
+            print "Skipping closed post (%d)" % (p["id"])
             continue
 
         p["level"] = 0
-        p["title"] = p["post_title"]
         node = HookiiTree(p)
 
         tree.children.append(node)
@@ -93,9 +91,13 @@ def build_tree(postlist, commentlist):
 def render_posts(tree):
     for node_post in tree.children:
         iterator = iter(node_post)
-        ctx_post = next(iterator)
-        ctx_post["comments"] = iterator
-        render_template("post.mako", ctx_post, "%s.html" % node_post.content["post_name"])
+        post = next(iterator)
+        ctx_post = {
+            "title": post["post_title"],
+            "post": post,
+            "comments": iterator
+        }
+        render_template("post.mako", ctx_post, "%s.html" % post["post_name"])
 
 
 def render_index(tree):
@@ -112,20 +114,20 @@ def hookiifier(user, passw, database, today):
 
     if today:
         yesterday = datetime.now() - timedelta(days=1)
-        datetoday = yesterday.strftime("%Y-%m-%d")
-        posts = db.get_posts(datetoday)
-        comments = db.get_comments(datetoday)
-
+        yesterday = yesterday.replace(hour=0, minute=0, second=0)
+        posts = db.get_posts(yesterday, only_published=True, only_with_comments=True)
+        comments = db.get_comments(yesterday)
         tree = build_tree(posts, comments)
         render_posts(tree)
         render_index(tree)
     else:
-        datemax = datetime.now()
         delta = timedelta(days=30)
+        datemax = datetime.now()
         datemin = datemax - delta
         posttree = HookiiTree()
-        while db.exists_older_post(datemax):
-            posts = db.get_posts(datemin, datemax)
+        min_post_date = db.min_post_date(only_published=True, only_with_comments=True)
+        while datemax >= min_post_date:
+            posts = db.get_posts(datemin, datemax, only_published=True, only_with_comments=True)
             comments = db.get_comments(datemin, datemax)
             tree = build_tree(posts, comments)
             render_posts(tree)

@@ -6,22 +6,22 @@
 
 <div class='hookii-article'>
     <h2 style='margin-bottom:0.1em;'>
-        <a href='http://www.hookii.it/${post_name}'>${post_title}</a>
+        <a href='http://www.hookii.it/${post["post_name"]}'>${post["post_title"]}</a>
     </h2>
     <p style='margin-top:0.1em; font-size:80%%'>
-        Comparso il ${post_date} su <a href='http://www.hookii.it/'>hookii.</a>
-        Vai all'articolo <a href='http://www.hookii.it/${post_name}'>${post_name}</a> per commentare.
+        Comparso il ${post["post_date"]} su <a href='http://www.hookii.it/'>hookii.</a>
+        Vai all'articolo <a href='http://www.hookii.it/${post["post_name"]}'>${post["post_name"]}</a> per commentare.
     </p>
 
     <p>
-        ${post_content | filters.url, filters.disqus_user, filters.email_antispam, filters.newline}
+        ${post["post_content"] | filters.url, filters.disqus_user, filters.email_antispam, filters.newline}
     <p>
 </div>
 
 <hr>
 
 <h3>
-    ${comment_count} ${"commenti" if comment_count != 1 else "commento"}
+    ${post["comment_count"]} ${"commenti" if post["comment_count"] != 1 else "commento"}
 </h3>
 
 <hr>
@@ -30,7 +30,7 @@
     % for com in comments:
         <div style="margin-left:${com["level"]*20}px; margin-right:-${com["level"]*20}px; width:80%%;">
             <h4 style='margin-bottom:0.1em;'>
-                <a href='http://www.hookii.it/${post_name}/#comment-${com["comment_disqusid"]}'>
+                <a href='http://www.hookii.it/${post["post_name"]}/#comment-${com["comment_disqusid"]}'>
                 % if "parent_author" not in com:
                     ${com["comment_author"]}
                 % else:
