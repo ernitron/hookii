@@ -38,7 +38,7 @@ class HookiiTree:
 
     def __iter__(self):
         yield self.content
-        for child in self.children:
+        for child in reversed(self.children):
             for child_content in child:
                 yield child_content
 
