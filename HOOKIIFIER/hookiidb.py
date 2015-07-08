@@ -53,9 +53,9 @@ class HookiiDB:
             %s
             ORDER BY post_date ASC;
         """
-        
+
         filters = []
-            
+
         if post_date_min is not None:
             filters.append("post_date > %(post_date_min)s")
 
@@ -74,7 +74,7 @@ class HookiiDB:
             "post_date_min": post_date_min,
             "post_date_max": post_date_max,
         }
-        
+
         return self._executeQuery(query % clause, args)
 
     def get_comments(self, post_date_min=None, post_date_max=None):
@@ -90,9 +90,9 @@ class HookiiDB:
             %s
             ORDER BY comment_date ASC
         """
-        
+
         filters = []
-            
+
         if post_date_min is not None:
             filters.append("post_date > %(post_date_min)s")
 
@@ -108,7 +108,7 @@ class HookiiDB:
             "post_date_min": post_date_min,
             "post_date_max": post_date_max,
         }
-        
+
         return self._executeQuery(query % clause, args)
 
     def exists_older_post(self, date):
@@ -121,7 +121,7 @@ class HookiiDB:
         """
         r = self._executeQuery(query, (date,))
         for re in r:
-            return re.get("exists_older_pos t", 0)
+            return re.get("exists_older_post", 0)
 
     def min_post_date(self, only_published=False, only_with_comments=False):
         query = """
