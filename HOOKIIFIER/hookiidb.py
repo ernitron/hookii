@@ -39,7 +39,7 @@ class HookiiDB:
             finally:
                 cur.close()
 
-    def get_posts(self, post_date_min=None, post_date_max=None):
+    def get_posts(self, post_date_min=None, post_date_max=None, only_published=False, only_with_comments=False):
         query = """
             SELECT id,
                    post_author,
@@ -61,6 +61,12 @@ class HookiiDB:
 
         if post_date_max is not None:
             filters.append("post_date <= %(post_date_max)s")
+
+        if only_published:
+            filters.append("post_status = 'publish'")
+
+        if only_with_comments:
+            filters.append("comment_count > 0")
 
         clause = "WHERE " + " AND ".join(filters) if len(filters) > 0 else ""
 
@@ -105,14 +111,35 @@ class HookiiDB:
         
         return self._executeQuery(query % clause, args)
 
-    def exist_older_posts(self, date):
+    def exists_older_post(self, date):
         query = """
             SELECT EXISTS (
                 SELECT 1
-                FROM avwp_comments
-                WHERE comment_date <= %s
-            ) AS older_posts;
+                FROM avwp_posts
+                WHERE post_date <= %s
+            ) AS exists_older_post;
         """
         r = self._executeQuery(query, (date,))
         for re in r:
-            return re.get("older_posts", 0)
+            return re.get("exists_older_pos t", 0)
+
+    def min_post_date(self, only_published=False, only_with_comments=False):
+        query = """
+            SELECT MIN(post_date) AS min_post_date
+            FROM avwp_posts
+            %s
+        """
+
+        filters = []
+
+        if only_published:
+            filters.append("post_status = 'publish'")
+
+        if only_with_comments:
+            filters.append("comment_count > 0")
+
+        clause = "WHERE " + " AND ".join(filters) if len(filters) > 0 else ""
+
+        r = self._executeQuery(query % clause)
+        for re in r:
+            return re.get("min_post_date", None)

@@ -124,7 +124,7 @@ def hookiifier(user, passw, database, today):
         delta = timedelta(days=30)
         datemin = datemax - delta
         posttree = HookiiTree()
-        while db.exist_older_posts(datemax):
+        while db.exists_older_post(datemax):
             posts = db.get_posts(datemin, datemax)
             comments = db.get_comments(datemin, datemax)
             tree = build_tree(posts, comments)
