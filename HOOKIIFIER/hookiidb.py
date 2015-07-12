@@ -152,3 +152,68 @@ class HookiiDB:
         r = self._executeQuery(query % clause)
         for re in r:
             return re.get("min_post_date", None)
+
+    def get_posts_with_new_comments(self,
+                                    comment_date_min,
+                                    only_published=False,
+                                    only_open=False):
+        query = """
+            SELECT p.id,
+                p.post_date,
+                p.post_author,
+                p.post_title,
+                p.post_content,
+                p.comment_count,
+                p.post_name,
+                p.comment_status
+            FROM avwp_posts AS p
+            %s
+            ORDER BY p.post_date ASC
+        """
+
+        filters = []
+
+        if only_published:
+            filters.append("p.post_status = 'publish'")
+
+        if only_open:
+            filters.append("p.comment_status = 'open'")
+
+        clause = """INNER JOIN (
+                        SELECT DISTINCT(comment_post_ID)
+                        FROM avwp_comments
+                        WHERE comment_date > %(comment_date_min)s
+                    ) AS cp
+                    ON p.id = cp.comment_post_ID
+                    WHERE """ + " AND ".join(filters) if len(filters) > 0 else ""
+
+        args = {
+            "comment_date_min": comment_date_min
+        }
+
+        return self._executeQuery(query % clause, args)
+
+    def get_comments_of_posts_with_new_comments(self, comment_date_min):
+        query = """
+            SELECT c.comment_id,
+                c.comment_date,
+                c.comment_author,
+                c.comment_content,
+                c.comment_parent,
+                c.comment_agent,
+                c.comment_post_ID
+            FROM avwp_comments AS c
+            INNER JOIN (
+                SELECT DISTINCT(comment_post_ID)
+                FROM avwp_comments
+                WHERE comment_date > %(comment_date_min)s
+            ) AS cp
+            ON c.comment_post_ID = cp.comment_post_ID
+            ORDER BY c.comment_date ASC
+        """
+
+        args = {
+            "comment_date_min": comment_date_min
+        }
+
+        return self._executeQuery(query, args)

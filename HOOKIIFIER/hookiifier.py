@@ -125,6 +125,7 @@ def build_tree(postlist, commentlist):
 def hookiifier(args):
     db = hookiidb.HookiiDB(args.user, args.password, args.database)
     renderer = HookiiRenderer(args.directory)
+    lastrun = read_last_run(args.last_run_file)
 
     if args.today:
         # calculate time span
@@ -143,10 +144,39 @@ def hookiifier(args):
         renderer.render_posts(tree)
         renderer.render_index(tree, args.today)
 
+    elif lastrun is not None and datetime.now() - lastrun < timedelta(days=30):
+        # timestamp to save in last-run file
+        timestamp = datetime.now()
+
+        # get posts with at least one new comment, and all their comments
+        posts = db.get_posts_with_new_comments(lastrun,
+                             only_published=True,
+                             only_open=True)
+        comments = db.get_comments_of_posts_with_new_comments(lastrun)
+
+        # build tree and render posts
+        tree = build_tree(posts, comments)
+        renderer.render_posts(tree)
+
+        # get all posts to render index
+        posts = db.get_posts(only_published=True,
+                             only_with_comments=True,
+                             only_open=not args.force)
+        # additional tree to accumulate (only) posts
+        posttree = HookiiTree()
+        posttree.children = [HookiiTree(p) for p in posts]
+
+        # render index
+        renderer.render_index(posttree)
+
+        # save timestamp
+        write_last_run(timestamp, args.last_run_file)
+
     else:
         # calculate initial time span
         delta = timedelta(days=args.deltat)
-        datemax = datetime.now()
+        timestamp = datetime.now()
+        datemax = timestamp
         datemin = datemax - delta
 
         # additional tree to accumulate (only) posts
@@ -177,8 +207,27 @@ def hookiifier(args):
         # render complete index
         renderer.render_index(posttree)
 
+        write_last_run(timestamp, args.last_run_file)
+
 #------------------------------------------------------------
 # File and printing utilities
+def write_last_run(timestamp, filepath):
+    try:
+        with open(filepath, 'w') as f:
+            f.write(timestamp.strftime("%Y-%m-%d %H:%M:%S"))
+    except IOError as e:
+        print(e)
+
+def read_last_run(filepath):
+    if not os.path.isfile(filepath):
+        return None
+    try:
+        with open(filepath, 'r') as f:
+            string = f.read().strip()
+            return datetime.strptime(string, "%Y-%m-%d %H:%M:%S")
+    except (IOError, ValueError) as e:
+        print(e)
+        return None
 
 #------------------------------------------------------------
 # Main finally
@@ -188,6 +237,7 @@ def main():
     parser.add_argument("--user", default="admin", help="database user")
     parser.add_argument("--password", "--pass", required=True, help="database password")
     parser.add_argument("--directory", default="/tmp/archived", help="output directory")
+    parser.add_argument("--last-run-file", default="/tmp/hookiifier-last-run", help="file with timestamp of last run")
     parser.add_argument("--deltat", default=30, type=int, help="chunk size for db querying, in days")
     parser.add_argument("--force", action="store_true", help="also render closed posts")
     parser.add_argument("--today", action="store_true", help="render only posts from last day")
