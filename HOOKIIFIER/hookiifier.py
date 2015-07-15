@@ -16,6 +16,7 @@ import glob
 import io
 import argparse
 import pkg_resources
+import logging
 from datetime import datetime, timedelta
 
 from mako.lookup import TemplateLookup
@@ -41,6 +42,7 @@ class HookiiTree:
 
 class HookiiRenderer:
     def __init__(self, output_directory):
+        self.logger = logging.getLogger(__name__)
         self.lookup = TemplateLookup(directories=[
             pkg_resources.resource_filename(__name__, "templates")])
         self.outdir = output_directory
@@ -51,6 +53,7 @@ class HookiiRenderer:
             ctx = Context(f, **context)
             t = self.lookup.get_template(template_filename)
             t.render_context(ctx)
+            self.logger.debug("Rendered %s to %s", template_filename, outfile)
 
     def render_posts(self, tree):
         # for each post subtree
@@ -61,6 +64,7 @@ class HookiiRenderer:
             ctx_post = {
                 "title": post["post_title"],
                 "post": post,
+                # the remaining objects are comments
                 "comments": iterator
             }
             filename = "%s.html" % post["post_name"]
@@ -77,6 +81,9 @@ class HookiiRenderer:
 
 
 def build_tree(postlist, commentlist):
+    logger = logging.getLogger(__name__)
+    logger.info("postlist length    = %d", len(postlist))
+    logger.info("commentlist length = %d", len(commentlist))
     # post dictionary {postid: post}
     posts = {}
     # comment dictionary {commentid: comment}
@@ -88,6 +95,7 @@ def build_tree(postlist, commentlist):
         # set additional values
         p["level"] = 0
 
+        logger.debug("post %d", p["id"])
         # insert post into tree and dict
         node = HookiiTree(p)
         tree.children.append(node)
@@ -100,6 +108,7 @@ def build_tree(postlist, commentlist):
         else:
             parent = comments.get(c["comment_parent"])
         if parent is None:
+            logger.debug("Comment %s has no existing parent", c["comment_id"])
             continue
 
         # set additional values for the comment
@@ -113,24 +122,32 @@ def build_tree(postlist, commentlist):
             _, c["comment_disqusid"] = c["comment_agent"].split(":")
         except ValueError:
             c["comment_disqusid"] = "0"
+            logger.info("Can't extract disqusid from comment agent '%s' of comment %d", c["comment_agent"], c["comment_id"])
 
+        logger.debug("comment %s of post %d", c["comment_id"], c["comment_post_ID"])
         # insert comment into tree and dict
         node = HookiiTree(c)
         parent.children.append(node)
         comments[c["comment_id"]] = node
 
+    logger.info("Post nodes = %d (%d posts not added to the tree)", len(posts), len(postlist) - len(posts))
+    logger.info("Comment nodes= %d (%d comments not added to the tree)", len(comments),len(commentlist) - len(comments))
+
     return tree
 
 
 def hookiifier(args):
+    logger = logging.getLogger(__name__)
     db = hookiidb.HookiiDB(args.user, args.password, args.database)
     renderer = HookiiRenderer(args.directory)
     lastrun = read_last_run(args.last_run_file)
 
     if args.today:
+        logger.info("Hookiifier section TODAY")
         # calculate time span
         yesterday = datetime.now() - timedelta(days=1)
-        yesterday = yesterday.replace(hour=0, minute=0, second=0)
+        yesterday = yesterday.replace(hour=0, minute=0, second=0, microsecond=0)
+        logger.info("Time range = (%s, %s]", yesterday, datetime.now())
 
         # get posts and comments from db
         posts = db.get_posts(yesterday,
@@ -145,6 +162,7 @@ def hookiifier(args):
         renderer.render_index(tree, args.today)
 
     elif lastrun is not None and datetime.now() - lastrun < timedelta(days=30):
+        logger.info("Hookiifier section LASTRUN")
         # timestamp to save in last-run file
         timestamp = datetime.now()
 
@@ -173,6 +191,7 @@ def hookiifier(args):
         write_last_run(timestamp, args.last_run_file)
 
     else:
+        logger.info("Hookiifier section ALL")
         # calculate initial time span
         delta = timedelta(days=args.deltat)
         timestamp = datetime.now()
@@ -185,8 +204,11 @@ def hookiifier(args):
         # get minimum post date from db
         min_post_date = db.min_post_date(only_published=True,
                                          only_with_comments=True)
+        logger.info("Minimum post date = %s", min_post_date)
 
         while datemax >= min_post_date:
+            logger.info("Time range (%s, %s]", datemin, datemax)
+
             # get posts and comments from db
             posts = db.get_posts(datemin, datemax,
                                  only_published=True,
@@ -212,13 +234,15 @@ def hookiifier(args):
 #------------------------------------------------------------
 # File and printing utilities
 def write_last_run(timestamp, filepath):
+    logger = logging.getLogger(__name__)
     try:
         with open(filepath, 'w') as f:
             f.write(timestamp.strftime("%Y-%m-%d %H:%M:%S"))
     except IOError as e:
-        print(e)
+        logger.warning(e)
 
 def read_last_run(filepath):
+    logger = logging.getLogger(__name__)
     if not os.path.isfile(filepath):
         return None
     try:
@@ -226,7 +250,7 @@ def read_last_run(filepath):
             string = f.read().strip()
             return datetime.strptime(string, "%Y-%m-%d %H:%M:%S")
     except (IOError, ValueError) as e:
-        print(e)
+        logger.warning(e)
         return None
 
 #------------------------------------------------------------
@@ -241,9 +265,19 @@ def main():
     parser.add_argument("--deltat", default=30, type=int, help="chunk size for db querying, in days")
     parser.add_argument("--force", action="store_true", help="also render closed posts")
     parser.add_argument("--today", action="store_true", help="render only posts from last day")
+    parser.add_argument("--loglevel", default="WARNING", choices=["CRITICAL","ERROR","WARNING","INFO","DEBUG","NOTSET"], type=str.upper)
     parser.add_argument("--version", action="version", version=__version__)
 
     args = parser.parse_args()
+
+    # configure logger
+    numeric_level = getattr(logging, args.loglevel.upper(), None)
+    if not isinstance(numeric_level, int):
+        raise ValueError('Invalid log level: %s' % args.loglevel)
+    logging.basicConfig(level=numeric_level, format="%(levelname)s:%(name)s:%(funcName)s(): %(message)s")
+    logger = logging.getLogger(__name__)
+
+    logger.debug(args)
 
     # create output directory if not existent
     try:
@@ -257,10 +291,11 @@ def main():
     for filename in glob.iglob(os.path.join(source_dir, '*')):
         try:
             shutil.copy(filename, args.directory)
+            logger.debug("copied static file %s to %s", filename, args.directory)
         except shutil.Error as e:
-            print('Error copying static file: %s' % e)
+            logger.error('Error copying static file: %s' % e)
         except IOError as e:
-            print('Error copying static file: %s' % e.strerror)
+            logger.error('Error copying static file: %s' % e.strerror)
 
     # archive!
     hookiifier(args)

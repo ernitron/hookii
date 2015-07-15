@@ -2,6 +2,7 @@
 
 from __future__ import print_function
 import sys
+import logging
 
 import MySQLdb as mysql
 import MySQLdb.cursors
@@ -11,6 +12,7 @@ class HookiiDB:
     db = None
 
     def __init__(self, user, password, database):
+        self.logger = logging.getLogger(__name__)
         try:
             self.db = mysql.connect(
                 host="localhost",
@@ -22,21 +24,23 @@ class HookiiDB:
                 cursorclass=MySQLdb.cursors.DictCursor
             )
         except mysql.Error as e:
-            print("Error opening db", e, file=sys.stderr)
+            self.logger.critical("MySQL Error [%d]: %s", e.args[0], e.args[1])
             sys.exit()
 
     def __del__(self):
-        self.db.close()
+        if self.db is not None:
+            self.db.close()
 
     def _executeQuery(self, query, args=None):
+        self.logger.debug("query = %s", query)
+        self.logger.debug("args = %s", args)
         with self.db as cur:
             try:
                 cur.execute(query, args)
                 return cur.fetchall()
             except mysql.DatabaseError as e:
-                print("Error:", e, file=sys.stderr)
-                print("\tquery", query, file=sys.stderr)
-                return
+                self.logger.critical("MySQL Error [%d]: %s", e.args[0], e.args[1])
+                sys.exit()
             finally:
                 cur.close()
 
