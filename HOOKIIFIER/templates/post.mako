@@ -30,7 +30,12 @@
     % for com in comments:
         <div style="margin-left:${com["level"]*20}px; margin-right:-${com["level"]*20}px; width:80%%;">
             <h4 style='margin-bottom:0.1em;'>
-                <a href='http://www.hookii.it/${post["post_name"]}/#comment-${com["comment_disqusid"]}'>
+                % if com["comment_type"] == "liveblog":
+                    <a href='http://www.hookii.it/${post["post_name"]}/#liveblog-entry-${com["comment_id"]}'>
+                    [LIVEBLOG]
+                % else:
+                    <a href='http://www.hookii.it/${post["post_name"]}/#comment-${com["comment_disqusid"]}'>
+                % endif
                 % if "parent_author" not in com:
                     ${com["comment_author"]}
                 % else:

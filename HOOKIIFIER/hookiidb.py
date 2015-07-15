@@ -98,6 +98,7 @@ class HookiiDB:
                    comment_content,
                    comment_parent,
                    comment_agent,
+                   comment_type,
                    comment_post_ID
             FROM avwp_comments
             %s
@@ -205,6 +206,7 @@ class HookiiDB:
                 c.comment_content,
                 c.comment_parent,
                 c.comment_agent,
+                c.comment_type,
                 c.comment_post_ID
             FROM avwp_comments AS c
             INNER JOIN (
