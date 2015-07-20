@@ -1,7 +1,10 @@
 <%inherit file="base.mako"/>
 
 <%
-    import HOOKIIFIER.filters as filters
+try:
+    from HOOKIIFIER import filters
+except ImportError:
+    import filters
 %>
 
 <div class='hookii-article'>

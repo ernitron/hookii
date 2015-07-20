@@ -22,7 +22,10 @@ from datetime import datetime, timedelta
 from mako.lookup import TemplateLookup
 from mako.runtime import Context
 
-from . import hookiidb
+try:
+    from HOOKIIFIER import hookiidb
+except ImportError:
+    import hookiidb
 
 
 __version__ = pkg_resources.get_distribution("HOOKIIFIER").version
