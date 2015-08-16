@@ -224,12 +224,13 @@ def hookiifier(args):
             renderer.render_posts(tree)
 
             # keep post data to render the complete index
-            posttree.children += [HookiiTree(n.content) for n in tree.children]
+            posttree.children += [HookiiTree(n.content) for n in reversed(tree.children)]
 
             # update time span
             datemin, datemax = (datemax - delta * 2, datemin)
 
         # render complete index
+        posttree.children.reverse()
         renderer.render_index(posttree)
 
         write_last_run(timestamp, args.last_run_file)
