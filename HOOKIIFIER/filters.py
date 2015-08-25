@@ -19,19 +19,42 @@ def _embed_url_generic(url):
 
 
 def _embed_url_image(url):
-    replacement_string = "<img src='\\1' width='420px' />"
+    replacement_string = (
+        "<img class='lazy' data-src='\\1' width='420px' style='max-width: 100%' />"
+        "<noscript>"
+            "<img src='\\1' width='420px' />"
+        "</noscript>"
+    )
     string, n = pattern_image.subn(replacement_string, url)
     return string, n > 0
 
 
 def _embed_url_youtube(url):
-    replacement_string = "<iframe width='560' height='315' src='https://www.youtube.com/embed/\\1' frameborder='0' allowfullscreen></iframe>"
+    replacement_string = (
+        "<div class='videoWrapperExt'>"
+            "<div class='videoWrapper'>"
+                "<iframe class='lazy' data-src='https://www.youtube.com/embed/\\1' width='560' height='315' frameborder='0' allowfullscreen></iframe>"
+                "<noscript>"
+                    "<iframe src='https://www.youtube.com/embed/\\1' width='560' height='315' frameborder='0' allowfullscreen></iframe>"
+                "</noscript>"
+            "</div>"
+        "</div>"
+    )
     string, n = pattern_youtube.subn(replacement_string, url)
     return string, n > 0
 
 
 def _embed_url_vimeo(url):
-    replacement_string = "<iframe src='https://player.vimeo.com/video/\\1' width='500' height='281' frameborder='0' allowfullscreen></iframe>"
+    replacement_string = (
+        "<div class='videoWrapperExt'>"
+            "<div class='videoWrapper'>"
+                "<iframe class='lazy' data-src='https://player.vimeo.com/video/\\1' width='500' height='281' frameborder='0' allowfullscreen></iframe>"
+                "<noscript>"
+                    "<iframe src='https://player.vimeo.com/video/\\1' width='500' height='281' frameborder='0' allowfullscreen></iframe>"
+                "</noscript>"
+            "</div>"
+        "</div>"
+    )
     string, n = pattern_vimeo.subn(replacement_string, url)
     return string, n > 0
 
