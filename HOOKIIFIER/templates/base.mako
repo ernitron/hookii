@@ -16,9 +16,9 @@
     <link rel="icon" href="http://www.hookii.it/wp-content/uploads/2014/12/favicon14.ico" type="image/gif"/>
     <link rel="apple-touch-icon" href="http://www.hookii.it/wp-content/uploads/2014/12/muccaipod.png" />
     <style>
-    .col1 { width: 50%%; display: inline-block; color:#444; }
-    .col2 { width: 20%%; display: inline-block; color:#444; }
-    .col3 { width: 5%%; text-align: right; display: inline-block; color:#444; }
+    .col1 { width: 50%; display: inline-block; color:#444; }
+    .col2 { width: 20%; display: inline-block; color:#444; }
+    .col3 { width: 5%; text-align: right; display: inline-block; color:#444; }
     </style>
 </head>
 
@@ -37,7 +37,7 @@
     
     <footer class="w3-container w3-theme-hookii">
     <%block name="footer">
-        <a href='http://www.hookii.it/' style='color: white; font-size:80%%'>Hookii</a>
+        <a href='http://www.hookii.it/' style='color: white; font-size:80%'>Hookii</a>
         Dookii productions &copy; 2014 - Generated on ${time.strftime("%c")}
     </%block>
     </footer>

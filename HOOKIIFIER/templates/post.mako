@@ -11,13 +11,13 @@ except ImportError:
     <h2 style='margin-bottom:0.1em;'>
         <a href='http://www.hookii.it/${post["post_name"]}'>${post["post_title"]}</a>
     </h2>
-    <p style='margin-top:0.1em; font-size:80%%'>
+    <p style='margin-top:0.1em; font-size:80%'>
         Comparso il ${post["post_date"]} su <a href='http://www.hookii.it/'>hookii.</a>
         Vai all'articolo <a href='http://www.hookii.it/${post["post_name"]}'>${post["post_name"]}</a> per commentare.
     </p>
 
     <p>
-        ${post["post_content"] | filters.url, filters.disqus_user, filters.email_antispam, filters.newline}
+        ${post["post_content"] | filters.email_antispam, filters.newline}
     <p>
 </div>
 
@@ -31,7 +31,7 @@ except ImportError:
 
 <div class='hookii-comment'>
     % for com in comments:
-        <div style="margin-left:${com["level"]*20}px; margin-right:-${com["level"]*20}px; width:80%%;">
+        <div style="margin-left:${com["level"]*20}px; margin-right:-${com["level"]*20}px; width:80%;">
             <h4 style='margin-bottom:0.1em;'>
                 % if com["comment_type"] == "liveblog":
                     <a href='http://www.hookii.it/${post["post_name"]}/#liveblog-entry-${com["comment_id"]}'>
@@ -46,9 +46,12 @@ except ImportError:
                 % endif
                 </a>
             </h4>
-            <p style='margin-top:0.1em; font-size:80%%'>${com["comment_date"]}</p>
+            <p style='margin-top:0.1em; font-size:80%'>${com["comment_date"]}</p>
             <p>${com["comment_content"] | filters.url, filters.disqus_user, filters.email_antispam, filters.newline }</p> 
             <hr>
         </div>
     % endfor
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyloadxt/1.0.5/jquery.lazyloadxt.extra.min.js"></script>
